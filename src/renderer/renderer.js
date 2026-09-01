@@ -10,6 +10,7 @@ const state = {
   settings: {},
   bookmarks: [],
   downloadsLive: new Map(),
+  downloadsHistory: [],
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -214,7 +215,9 @@ function renderTabs() {
     else fav.setAttribute('style', faviconStyle(tab.favicon, tab.url));
 
     const close = el('span', { className: 'close', textContent: '✕', title: 'Close tab' });
-    close.addEventListener('click', (e) => { e.stopPropagation(); closeTab(tab.id); });
+    // Use mousedown, not click: activating a tab re-renders the strip, which
+    // destroys this node before a click's mouseup can land on it.
+    close.addEventListener('mousedown', (e) => { e.stopPropagation(); e.preventDefault(); closeTab(tab.id); });
 
     const node = el('div', { className: 'tab' + (tab.id === state.activeId ? ' active' : '') }, [
       fav,
@@ -222,6 +225,7 @@ function renderTabs() {
       close,
     ]);
     node.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.close')) return;
       if (e.button === 1) { closeTab(tab.id); return; }
       activateTab(tab.id);
     });
@@ -267,7 +271,7 @@ function openPanel(kind) {
   bar.textContent = '';
 
   if (kind === 'history') renderHistoryPanel(body, bar);
-  else if (kind === 'downloads') renderDownloadsPanel(body, bar);
+  else if (kind === 'downloads') { renderDownloadsPanel(body, bar); refreshDownloadsHistory(); }
   else if (kind === 'bookmarks') renderBookmarksPanel(body, bar);
   else if (kind === 'settings') renderSettingsPanel(body, bar);
 }
@@ -370,20 +374,37 @@ async function renderBookmarksPanel(body, bar) {
   });
 }
 
-async function renderDownloadsPanel(body, bar) {
+async function refreshDownloadsHistory() {
+  try {
+    const { downloads } = await window.browser.getState();
+    state.downloadsHistory = downloads || [];
+  } catch { /* ignore */ }
+  if (isPanelOpen('Downloads')) renderDownloadsPanel($('#panel-body'), $('#panel-toolbar'));
+}
+
+function isPanelOpen(title) {
+  return !panel.classList.contains('hidden') && $('#panel-title').textContent === title;
+}
+
+function renderDownloadsPanel(body, bar) {
   $('#panel-title').textContent = 'Downloads';
+  body.textContent = '';
+  bar.textContent = '';
+
   const clearBtn = el('button', { className: 'text-btn', textContent: 'Clear finished' });
+  clearBtn.addEventListener('click', async () => {
+    await window.browser.clearDownloads();
+    state.downloadsHistory = [];
+    renderDownloadsPanel(body, bar);
+  });
   bar.append(clearBtn);
   const list = el('div');
   body.append(list);
 
-  const { downloads } = await window.browser.getState();
-  const live = [...state.downloadsLive.values()];
-  const liveUrls = new Set(live.map((d) => d.url + d.filename));
-  const combined = [
-    ...live.map((d) => ({ ...d, live: true })),
-    ...downloads.filter((d) => !liveUrls.has(d.url + d.filename)),
-  ];
+  const live = [...state.downloadsLive.values()].map((d) => ({ ...d, live: true }));
+  const liveKeys = new Set(live.map((d) => d.url + ' ' + d.filename));
+  const past = (state.downloadsHistory || []).filter((d) => !liveKeys.has(d.url + ' ' + d.filename));
+  const combined = [...live, ...past];
 
   if (!combined.length) { list.append(el('div', { className: 'empty-state', textContent: 'No downloads' })); return; }
 
@@ -427,11 +448,6 @@ async function renderDownloadsPanel(body, bar) {
     ];
     list.append(el('div', { className: 'row', dataset: { dlid: d.id } }, rows));
   }
-
-  clearBtn.addEventListener('click', async () => {
-    await window.browser.clearDownloads();
-    renderDownloadsPanel(body, bar);
-  });
 }
 
 async function renderSettingsPanel(body, bar) {
@@ -648,11 +664,16 @@ function cycleTab(dir) {
 function onDownload(kind) {
   return (d) => {
     state.downloadsLive.set(d.id, d);
-    if (kind === 'started') openPanel('downloads');
-    if (kind === 'done') setTimeout(() => state.downloadsLive.delete(d.id), 60000);
-    if (!panel.classList.contains('hidden') && $('#panel-title').textContent === 'Downloads') {
-      renderDownloadsPanel($('#panel-body'), $('#panel-toolbar'));
+    if (kind === 'started') { openPanel('downloads'); return; }
+    if (kind === 'done') {
+      // Persisted record now exists in main; pull it in, then drop the live entry.
+      refreshDownloadsHistory();
+      setTimeout(() => {
+        state.downloadsLive.delete(d.id);
+        if (isPanelOpen('Downloads')) renderDownloadsPanel($('#panel-body'), $('#panel-toolbar'));
+      }, 8000);
     }
+    if (isPanelOpen('Downloads')) renderDownloadsPanel($('#panel-body'), $('#panel-toolbar'));
   };
 }
 window.browser.on('download:started', onDownload('started'));
