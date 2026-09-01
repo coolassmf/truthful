@@ -1,0 +1,53 @@
+{
+  "name": "truthful",
+  "version": "0.1.0",
+  "description": "Truthful — a minimal Chromium-based web browser built with Electron",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "node scripts/launch.js",
+    "dev": "node scripts/launch.js --dev",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:portable": "electron-builder --win portable"
+  },
+  "author": "imaginationtiktokui@gmail.com",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "@ghostery/adblocker": "^2.18.2",
+    "cross-fetch": "^4.0.0"
+  },
+  "build": {
+    "appId": "com.truthful.browser",
+    "productName": "Truthful",
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "files": [
+      "src/**/*",
+      "scripts/launch.js",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Truthful"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    }
+  }
+}

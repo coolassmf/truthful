@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; connect-src 'self' browser:;" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Truthful</title>
+</head>
+<body>
+  <div id="tabstrip">
+    <div id="tabs"></div>
+    <button id="new-tab" class="icon-btn" title="New tab (Ctrl+T)">+</button>
+    <div class="strip-spacer"></div>
+    <button id="menu-btn" class="icon-btn" title="Menu">&#8942;</button>
+  </div>
+
+  <div id="toolbar">
+    <button id="nav-back" class="icon-btn" title="Back (Alt+Left)">&#8592;</button>
+    <button id="nav-forward" class="icon-btn" title="Forward (Alt+Right)">&#8594;</button>
+    <button id="nav-reload" class="icon-btn" title="Reload (Ctrl+R)">&#8635;</button>
+    <button id="nav-home" class="icon-btn" title="Home">&#8962;</button>
+
+    <div id="omnibox-wrap">
+      <span id="omnibox-scheme" class="secure">&#128274;</span>
+      <input id="omnibox" type="text" spellcheck="false"
+             placeholder="Search Google or type a URL" autocomplete="off" />
+      <button id="star-btn" class="icon-btn" title="Bookmark this tab (Ctrl+D)">&#9734;</button>
+    </div>
+
+    <button id="shield-btn" class="icon-btn" title="Ad & tracker blocking">
+      <span class="shield">&#128737;</span><span id="shield-count">0</span>
+    </button>
+    <button id="downloads-btn" class="icon-btn" title="Downloads (Ctrl+J)">&#8681;</button>
+  </div>
+
+  <div id="bookmarksbar"></div>
+
+  <div id="find-bar" class="hidden">
+    <input id="find-input" type="text" placeholder="Find in page" />
+    <span id="find-status"></span>
+    <button id="find-prev" class="icon-btn">&#8593;</button>
+    <button id="find-next" class="icon-btn">&#8595;</button>
+    <button id="find-close" class="icon-btn">&#10005;</button>
+  </div>
+
+  <div id="views"></div>
+
+  <!-- Slide-over panels -->
+  <div id="panel-overlay" class="hidden"></div>
+
+  <div id="panel" class="hidden">
+    <div class="panel-head">
+      <h2 id="panel-title"></h2>
+      <button id="panel-close" class="icon-btn">&#10005;</button>
+    </div>
+    <div class="panel-toolbar" id="panel-toolbar"></div>
+    <div id="panel-body"></div>
+  </div>
+
+  <!-- Dropdown menu -->
+  <div id="menu-dropdown" class="hidden">
+    <button data-act="new-tab">New Tab<span>Ctrl+T</span></button>
+    <button data-act="new-window">New Window<span>Ctrl+N</span></button>
+    <div class="menu-sep"></div>
+    <button data-act="history">History<span>Ctrl+H</span></button>
+    <button data-act="downloads">Downloads<span>Ctrl+J</span></button>
+    <button data-act="bookmarks">Bookmarks<span>Ctrl+Shift+O</span></button>
+    <div class="menu-sep"></div>
+    <button data-act="find">Find in Page<span>Ctrl+F</span></button>
+    <button data-act="zoom-out">Zoom Out<span>Ctrl+-</span></button>
+    <button data-act="zoom-in">Zoom In<span>Ctrl++</span></button>
+    <button data-act="devtools">Developer Tools<span>Ctrl+Shift+I</span></button>
+    <div class="menu-sep"></div>
+    <button data-act="settings">Settings<span>Ctrl+,</span></button>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
